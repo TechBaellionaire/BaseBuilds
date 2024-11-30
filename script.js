@@ -1,37 +1,41 @@
-let userAddress;
+<script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
 
-async function connectWallet() {
-  if (window.ethereum) {
-    try {
-      // Request wallet connection
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      userAddress = accounts[0];
-      document.getElementById('connectWallet').innerText = 'Wallet Connected';
-      document.getElementById('fundBalance').classList.remove('hidden');
-      document.getElementById('donationForm').classList.remove('hidden');
-      getFundBalance(); // Call function to fetch fund balance
-    } catch (error) {
-      console.error("Connection failed", error);
+  let web3;
+  let contract;
+
+  const contractAddress = "YOUR_SMART_CONTRACT_ADDRESS"; // Replace with deployed address
+  const contractABI = [ /* Add your contract ABI here */ ]; // Replace with your ABI
+
+  async function connectWallet() {
+    if (window.ethereum) {
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+      web3 = new Web3(window.ethereum);
+      contract = new web3.eth.Contract(contractABI, contractAddress);
+      alert("Wallet Connected");
+    } else {
+      alert("Please install MetaMask!");
     }
-  } else {
-    alert("Please install MetaMask or a Base-compatible wallet.");
   }
-}
 
-async function getFundBalance() {
-  // Placeholder for fetching the actual fund balance from smart contract
-  const balance = 100; // Example balance, replace with actual contract call
-  document.getElementById('balance').innerText = balance;
-}
+  async function mintNFT(event) {
+    event.preventDefault();
+    const accounts = await web3.eth.getAccounts();
+    const donationAmount = web3.utils.toWei("0.01", "ether");
 
-async function donateFunds(event) {
-  event.preventDefault();
-  const amount = document.getElementById('amount').value;
-  
-  // Placeholder for smart contract interaction to donate funds
-  console.log(`User ${userAddress} is donating ${amount} BASE`);
+    // Generate NFT metadata and tokenURI
+    const tokenURI = "YOUR_NFT_METADATA"; // Example placeholder
 
-  // Example confirmation message
-  alert(`Thank you for donating ${amount} BASE!`);
-  document.getElementById('amount').value = ''; // Clear the form
-}
+    try {
+      await contract.methods.mintNFT(tokenURI).send({
+        from: accounts[0],
+        value: donationAmount
+      });
+      alert("NFT Minted Successfully!");
+    } catch (error) {
+      console.error("Minting failed:", error);
+    }
+  }
+
+  // Event Listeners
+  document.getElementById('connectWallet').addEventListener('click', connectWallet);
+  document.getElementById('mintForm').addEventListener('submit', mintNFT);
